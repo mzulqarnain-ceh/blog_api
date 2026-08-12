@@ -12,7 +12,19 @@ def home():
 # Signup route
 @app.route("/signup",methods=["POST"])
 def signup():
-    pass
+    data=request.get_json()
+    if not data or "username" not in data or "email" not in data or "password" not in data:
+        return jsonify({"error":"every feild must be filled"}),400
+    conn=get_db_connection()
+    user=conn.execute("SELECT * FROM users WHERE username=? OR email=?",(data["username"],data["email"],)).fetchone()
+    if user:
+        conn.close()
+        return jsonify({"error":"username or email already exists"}),400
+    hash=hash_password(data["password"])
+    conn.execute("INSERT INTO users (username,email,password_hash) VALUES(?,?,?)",(data["username"],data["email"],hash,))
+    conn.commit()
+    conn.close()
+    return jsonify({"message":"user created successfully"}),201
 # Login route
 @app.route("/login",methods=["POST"])
 def login():
