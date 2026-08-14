@@ -60,7 +60,11 @@ def create_post(user_id):
 # get all posts route - public
 @app.route("/posts",methods=["GET"])
 def get_all_posts():
-    pass
+    conn = get_db_connection()
+    posts = conn.execute("SELECT * FROM posts ORDER BY created_at DESC").fetchall()
+    conn.close()
+    posts_list = [dict(row) for row in posts]
+    return jsonify({"posts": posts_list}), 200
 # get single post route - public
 @app.route("/posts/<id>",methods=["GET"])
 def get_posts_id(id):
