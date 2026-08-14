@@ -65,7 +65,7 @@ def get_all_posts():
     conn.close()
     posts_list = [dict(row) for row in posts]
     return jsonify({"posts": posts_list}), 200
-# get single post route - public
+# get specific/single post route - public
 @app.route("/posts/<id>",methods=["GET"])
 def get_posts_id(id):
     conn=get_db_connection()
@@ -75,12 +75,26 @@ def get_posts_id(id):
         return jsonify({"error":"post not found"}),404
     conn.close()
     return jsonify({"post":dict(post)}),200
-    pass
 # update post route - protected, owner only
 @app.route("/posts/<id>",methods=["PUT"])
 @token_required
 def upload_post(user_id,id):
-    pass
+    conn=get_db_connection()
+    post=conn.execute("SELECT * FROM posts WHERE id=?",(id,)).fetchone()
+    if post is None:
+        conn.close()
+        return jsonify({"error":"post not found"}),404
+    if post["user_id"] != user_id:
+        conn.close()
+        return jsonify({"error":"you are not allowed to edit this post"}),403
+    data=request.get_json()
+    if not data or "title" not in data:
+        conn.close()
+        return jsonify({"error":"title must be required"}),400
+    conn.execute("UPDATE posts SET title=?, content=? WHERE id=?",(data["title"],data.get("content"),id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"message":"post updated successfully"}),200
 # delete post route - protected, owner only
 @app.route("/posts/<id>",methods=["DELETE"])
 @token_required
