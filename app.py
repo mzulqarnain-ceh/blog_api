@@ -68,6 +68,13 @@ def get_all_posts():
 # get single post route - public
 @app.route("/posts/<id>",methods=["GET"])
 def get_posts_id(id):
+    conn=get_db_connection()
+    post=conn.execute("SELECT * FROM posts WHERE id=?",(id,)).fetchone()
+    if post is None:
+        conn.close()
+        return jsonify({"error":"post not found"}),404
+    conn.close()
+    return jsonify({"post":dict(post)}),200
     pass
 # update post route - protected, owner only
 @app.route("/posts/<id>",methods=["PUT"])
