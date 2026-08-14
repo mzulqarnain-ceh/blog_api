@@ -48,7 +48,15 @@ def login():
 @app.route("/posts",methods=["POST"])
 @token_required
 def create_post(user_id):
-    pass
+    data=request.get_json()
+    if "title" not in data:
+        return jsonify({"error":"title is required"}),400
+    conn=get_db_connection()
+    cursor=conn.execute("INSERT INTO posts (title,content,user_id) VALUES(?,?,?)",(data["title"],data["content"],user_id,))
+    conn.commit()
+    get_post_id=cursor.lastrowid
+    conn.close()
+    return jsonify({"message":"post created successfully","post_id":get_post_id}),201
 # get all posts route - public
 @app.route("/posts",methods=["GET"])
 def get_all_posts():
