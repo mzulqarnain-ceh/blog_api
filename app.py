@@ -99,7 +99,18 @@ def upload_post(user_id,id):
 @app.route("/posts/<id>",methods=["DELETE"])
 @token_required
 def delete_post(user_id,id):
-    pass
+    conn=get_db_connection()
+    post=conn.execute("SELECT * FROM posts WHERE id=?",(id,)).fetchone()
+    if post is None:
+        conn.close()
+        return jsonify({"error":"post not found"}),404
+    if post["user_id"] != user_id:
+        conn.close()
+        return jsonify({"error":"you are not allowed to delete this post"}),403
+    conn.execute("DELETE FROM posts WHERE id=?",(id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"message":"post deleted successfully"}),200
 # Comments routes
 # post comments - protected
 @app.route("/posts/<id>/comments",methods=["POST"])
