@@ -28,7 +28,21 @@ def signup():
 # Login route
 @app.route("/login",methods=["POST"])
 def login():
-    pass
+    data=request.get_json()
+    if not data or "username" not in data or "password" not in data:
+        return jsonify({"error":"username and password are required"}),400
+    conn=get_db_connection()
+    user=conn.execute("SELECT * FROM users WHERE username=?",(data["username"],)).fetchone()
+    if user is None:
+        conn.close()
+        return jsonify({"error":"no user found"}),404
+    password=verify_password(data["password"],user["password_hash"])
+    if password is False:
+        conn.close()
+        return jsonify({"error":"Invalid credentials"}),401
+    token=generate_token(user["id"])
+    conn.close()
+    return jsonify({"message":"login successful","token": token}),200
 # Posts routes
 # create post route  -protected
 @app.route("/posts",methods=["POST"])
