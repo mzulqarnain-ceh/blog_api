@@ -132,7 +132,15 @@ def make_comment(user_id,id):
 # view comments - public
 @app.route("/posts/<id>/comments",methods=["GET"])
 def get_comments(id):
-    pass
+    conn=get_db_connection()
+    post=conn.execute("SELECT * FROM posts WHERE id=?",(id,)).fetchone()
+    if post is None:
+        conn.close()
+        return jsonify({"error":"post not found"}),404
+    comments=conn.execute("SELECT * FROM comments WHERE post_id=? ORDER BY created_at DESC",(id,)).fetchall()
+    comments_list=[dict(row) for row in comments]
+    conn.close()
+    return jsonify({"comments":comments_list}),200
 # Entry point
 if __name__=="__main__":
     init_db()
