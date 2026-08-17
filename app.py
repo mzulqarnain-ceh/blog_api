@@ -116,7 +116,19 @@ def delete_post(user_id,id):
 @app.route("/posts/<id>/comments",methods=["POST"])
 @token_required
 def make_comment(user_id,id):
-    pass
+    conn=get_db_connection()
+    post=conn.execute("SELECT * FROM posts WHERE id=?",(id,)).fetchone()
+    if post is None:
+        conn.close()
+        return jsonify({"error":"post not found"}),404
+    data=request.get_json()
+    if not data or "comment_text" not in data or data["comment_text"]=="":
+        conn.close()
+        return jsonify({"error":"comment text is required"}),400
+    conn.execute("INSERT INTO comments (post_id, user_id, comment_text) VALUES(?,?,?)",(id,user_id,data["comment_text"],))
+    conn.commit()
+    conn.close()
+    return jsonify({"message":"comment added successfully"}),201
 # view comments - public
 @app.route("/posts/<id>/comments",methods=["GET"])
 def get_comments(id):
