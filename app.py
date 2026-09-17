@@ -49,10 +49,10 @@ def login():
 @token_required
 def create_post(user_id):
     data=request.get_json()
-    if "title" not in data:
+    if not data or "title" not in data:
         return jsonify({"error":"title is required"}),400
     conn=get_db_connection()
-    cursor=conn.execute("INSERT INTO posts (title,content,user_id) VALUES(?,?,?)",(data["title"],data["content"],user_id,))
+    cursor=conn.execute("INSERT INTO posts (title,content,user_id) VALUES(?,?,?)",(data["title"],data.get("content"),user_id,))
     conn.commit()
     get_post_id=cursor.lastrowid
     conn.close()
